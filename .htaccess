@@ -1,12 +1,13 @@
 Options -Indexes
+DirectoryIndex views/login.html
 
 RewriteEngine On
 
 # Pass Authorization header through to PHP (Apache strips it by default)
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-# Block all access to src/ and database/ directories
-RewriteRule ^(src|database)/ - [F,L]
+# Block all access to src/, database/, and tests/ directories
+RewriteRule ^(src|database|tests)/ - [F,L]
 
 # Block direct .php access to api handlers
 RewriteRule ^api/[^/]+\.php$ - [F,L]
