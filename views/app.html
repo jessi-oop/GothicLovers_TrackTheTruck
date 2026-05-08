@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FleetControl Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "on-background":"#191c1e","on-primary-fixed":"#341100","primary-fixed":"#ffdbca",
+        "on-error":"#ffffff","tertiary-fixed":"#d5e3fc","on-primary":"#ffffff",
+        "on-secondary":"#ffffff","on-tertiary":"#ffffff","surface-container-low":"#f2f4f6",
+        "error-container":"#ffdad6","on-surface":"#191c1e","secondary-fixed-dim":"#bec6e0",
+        "error":"#ba1a1a","surface-container-lowest":"#ffffff","surface-tint":"#9d4300",
+        "on-secondary-container":"#5c647a","surface-variant":"#e0e3e5","primary-container":"#f97316",
+        "secondary":"#565e74","secondary-container":"#dae2fd","surface-container-high":"#e6e8ea",
+        "inverse-primary":"#ffb690","on-tertiary-fixed":"#0d1c2e","tertiary-fixed-dim":"#b9c7df",
+        "surface":"#f7f9fb","surface-dim":"#d8dadc","on-tertiary-fixed-variant":"#3a485b",
+        "outline":"#8c7164","inverse-on-surface":"#eff1f3","surface-container":"#eceef0",
+        "surface-bright":"#f7f9fb","primary-fixed-dim":"#ffb690","on-tertiary-container":"#253345",
+        "on-error-container":"#93000a","background":"#f7f9fb","primary":"#9d4300",
+        "outline-variant":"#e0c0b1","on-secondary-fixed-variant":"#3f465c",
+        "on-primary-fixed-variant":"#783200","inverse-surface":"#2d3133",
+        "tertiary":"#515f74","tertiary-container":"#8d9bb2","surface-container-highest":"#e0e3e5",
+        "on-primary-container":"#582200","on-surface-variant":"#584237",
+        "secondary-fixed":"#dae2fd","on-secondary-fixed":"#131b2e"
+      },
+      borderRadius: { DEFAULT:"0.125rem", lg:"0.25rem", xl:"0.5rem", full:"0.75rem" },
+      spacing: { "container-max":"1440px","xl":"48px","xs":"4px","md":"16px","sm":"8px","base":"4px","lg":"24px","gutter":"20px" },
+      fontFamily: { "headline-md":["IBM Plex Sans"],"data-mono":["JetBrains Mono"],"label-caps":["Inter"],"body-sm":["Inter"],"body-base":["Inter"],"display-lg":["IBM Plex Sans"] },
+      fontSize: {
+        "headline-md":["24px",{lineHeight:"1.3",fontWeight:"600"}],
+        "data-mono":["13px",{lineHeight:"1.0",letterSpacing:"-0.02em",fontWeight:"500"}],
+        "label-caps":["12px",{lineHeight:"1.0",fontWeight:"700"}],
+        "body-sm":["14px",{lineHeight:"1.4",fontWeight:"400"}],
+        "body-base":["16px",{lineHeight:"1.5",fontWeight:"400"}],
+        "display-lg":["36px",{lineHeight:"1.2",fontWeight:"700"}]
+      }
+    }
+  }
+}
+</script>
+</head>
+<body class="bg-background text-on-background font-body-base">
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-on-background border-r border-outline flex flex-col py-lg z-50">
+  <div class="px-lg mb-xl">
+    <h1 class="text-headline-md font-headline-md font-bold text-primary-fixed">FleetControl</h1>
+    <p class="font-label-caps text-label-caps text-surface-variant opacity-70">Industrial Logistics</p>
+  </div>
+  <nav class="flex-1 px-md space-y-xs">
+    <a data-nav="dashboard" href="#dashboard"
+      class="nav-link flex items-center gap-md px-md py-sm text-surface-variant hover:text-white hover:bg-on-secondary-fixed-variant rounded-lg transition-colors">
+      <span class="material-symbols-outlined" style="font-size:20px">dashboard</span>
+      <span class="font-label-caps text-label-caps">Dashboard</span>
+    </a>
+    <a data-nav="equipment" href="#equipment"
+      class="nav-link flex items-center gap-md px-md py-sm text-surface-variant hover:text-white hover:bg-on-secondary-fixed-variant rounded-lg transition-colors">
+      <span class="material-symbols-outlined" style="font-size:20px">precision_manufacturing</span>
+      <span class="font-label-caps text-label-caps">Equipment</span>
+    </a>
+    <a data-nav="sites" href="#sites" id="nav-sites"
+      class="nav-link flex items-center gap-md px-md py-sm text-surface-variant hover:text-white hover:bg-on-secondary-fixed-variant rounded-lg transition-colors">
+      <span class="material-symbols-outlined" style="font-size:20px">location_on</span>
+      <span class="font-label-caps text-label-caps">Sites</span>
+    </a>
+    <a data-nav="audit" href="#audit"
+      class="nav-link flex items-center gap-md px-md py-sm text-surface-variant hover:text-white hover:bg-on-secondary-fixed-variant rounded-lg transition-colors">
+      <span class="material-symbols-outlined" style="font-size:20px">history</span>
+      <span class="font-label-caps text-label-caps">Audit Log</span>
+    </a>
+  </nav>
+  <div class="px-md mt-auto pt-lg space-y-xs">
+    <button id="btn-add-equipment" data-admin
+      class="w-full bg-primary-container text-on-primary-container font-bold py-sm px-lg rounded-lg hover:brightness-110 transition-all mb-sm text-body-sm">
+      Add Equipment
+    </button>
+    <a data-nav="settings" href="#settings"
+      class="nav-link flex items-center gap-md px-md py-sm text-surface-variant hover:text-white hover:bg-on-secondary-fixed-variant rounded-lg transition-colors">
+      <span class="material-symbols-outlined" style="font-size:20px">settings</span>
+      <span class="font-label-caps text-label-caps">Settings</span>
+    </a>
+    <a data-nav="support" href="#support"
+      class="nav-link flex items-center gap-md px-md py-sm text-surface-variant hover:text-white hover:bg-on-secondary-fixed-variant rounded-lg transition-colors">
+      <span class="material-symbols-outlined" style="font-size:20px">help</span>
+      <span class="font-label-caps text-label-caps">Support</span>
+    </a>
+    <div class="flex items-center gap-md px-md py-md mt-sm border-t border-surface-variant/20">
+      <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-sm flex-shrink-0">
+        <span id="user-avatar-initial">U</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p id="user-name" class="text-white font-bold text-body-sm truncate">User</p>
+        <p id="user-role" class="text-surface-variant text-xs opacity-60 capitalize">—</p>
+      </div>
+      <button id="btn-logout" title="Sign out" class="text-surface-variant hover:text-white transition-colors flex-shrink-0">
+        <span class="material-symbols-outlined" style="font-size:18px">logout</span>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- ── Top Bar ─────────────────────────────────────────────────────────── -->
+<header class="fixed top-0 right-0 left-64 h-16 bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center px-lg z-40">
+  <div class="flex items-center gap-lg">
+    <span class="font-headline-md text-headline-md font-extrabold text-on-background">FleetControl Pro</span>
+    <div class="relative w-80">
+      <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:18px">search</span>
+      <input id="global-search" class="w-full pl-xl pr-md py-xs bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-body-sm transition-all" placeholder="Search assets, sites..." type="text"/>
+    </div>
+  </div>
+  <div class="flex items-center gap-md">
+    <button id="btn-checkout" class="bg-primary text-on-primary font-bold px-lg py-xs rounded hover:brightness-110 transition-all font-label-caps text-label-caps">
+      Check In / Out
+    </button>
+    <button class="p-xs text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors relative">
+      <span class="material-symbols-outlined" style="font-size:22px">notifications</span>
+      <span id="notif-dot" class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full hidden"></span>
+    </button>
+    <button class="p-xs text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors">
+      <span class="material-symbols-outlined" style="font-size:22px">account_circle</span>
+    </button>
+  </div>
+</header>
+
+<!-- ── Main ────────────────────────────────────────────────────────────── -->
+<main class="ml-64 mt-16">
+
+  <!-- Dashboard / Map -->
+  <section data-section="dashboard" class="hidden h-[calc(100vh-64px)] relative overflow-hidden">
+    <div id="leaflet-map" class="absolute inset-0 z-0"></div>
+    <!-- Floating zoom controls -->
+    <div class="absolute top-lg left-lg flex flex-col gap-sm z-10">
+      <div class="bg-white border border-outline-variant rounded shadow-md overflow-hidden flex flex-col">
+        <button id="map-zoom-in" class="p-sm hover:bg-surface-container-low transition-colors border-b border-outline-variant">
+          <span class="material-symbols-outlined" style="font-size:18px">add</span>
+        </button>
+        <button id="map-zoom-out" class="p-sm hover:bg-surface-container-low transition-colors">
+          <span class="material-symbols-outlined" style="font-size:18px">remove</span>
+        </button>
+      </div>
+      <button id="map-locate" class="bg-white border border-outline-variant p-sm rounded shadow-md hover:bg-surface-container-low transition-colors">
+        <span class="material-symbols-outlined" style="font-size:18px">my_location</span>
+      </button>
+    </div>
+    <!-- Equipment detail panel -->
+    <div id="map-panel" class="absolute top-lg right-lg bottom-[88px] w-96 bg-white border border-outline-variant rounded-lg shadow-2xl flex flex-col z-10">
+      <div id="map-panel-empty" class="flex-1 flex flex-col items-center justify-center text-on-surface-variant p-lg text-center">
+        <span class="material-symbols-outlined text-5xl mb-md opacity-30">map</span>
+        <p class="font-bold text-on-background">Select a marker</p>
+        <p class="text-body-sm mt-xs">Click any equipment pin on the map to view details</p>
+      </div>
+      <div id="map-panel-detail" class="hidden flex-col h-full">
+        <div class="p-md border-b border-outline-variant">
+          <div class="flex justify-between items-start mb-sm">
+            <div>
+              <span id="dp-status-badge" class="px-sm py-xs rounded text-xs font-bold uppercase tracking-wider mb-xs block"></span>
+              <h2 id="dp-name" class="font-headline-md text-headline-md text-on-background"></h2>
+              <p id="dp-serial" class="text-on-surface-variant font-data-mono text-data-mono"></p>
+            </div>
+            <button id="map-panel-close" class="text-on-surface-variant hover:text-on-background">
+              <span class="material-symbols-outlined" style="font-size:20px">close</span>
+            </button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-md space-y-md">
+          <div class="grid grid-cols-2 gap-sm">
+            <div class="p-sm bg-surface-container-low border border-outline-variant rounded">
+              <p class="text-xs font-label-caps text-on-surface-variant mb-xs">Make / Model</p>
+              <p id="dp-make-model" class="font-bold text-body-sm text-on-background"></p>
+            </div>
+            <div class="p-sm bg-surface-container-low border border-outline-variant rounded">
+              <p class="text-xs font-label-caps text-on-surface-variant mb-xs">Serial No.</p>
+              <p id="dp-serial2" class="font-data-mono text-data-mono text-on-background"></p>
+            </div>
+          </div>
+          <div class="space-y-sm">
+            <div class="flex items-center gap-md">
+              <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">location_on</span>
+              <div>
+                <p class="text-xs font-label-caps text-on-surface-variant uppercase">Site</p>
+                <p id="dp-site" class="font-bold text-body-sm text-on-background"></p>
+              </div>
+            </div>
+            <div id="dp-checkout-row" class="hidden flex items-center gap-md">
+              <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">person</span>
+              <div>
+                <p class="text-xs font-label-caps text-on-surface-variant uppercase">Checked Out By</p>
+                <p id="dp-operator" class="font-bold text-body-sm text-on-background"></p>
+              </div>
+            </div>
+            <div class="flex items-center gap-md">
+              <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">pin_drop</span>
+              <div>
+                <p class="text-xs font-label-caps text-on-surface-variant uppercase">Coordinates</p>
+                <p id="dp-coords" class="font-data-mono text-data-mono text-on-background"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-md border-t border-outline-variant">
+          <button id="dp-checkout-btn" data-admin
+            class="w-full bg-primary-container text-on-primary-container font-bold py-sm rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-sm text-body-sm">
+            <span class="material-symbols-outlined" style="font-size:18px">key</span>
+            Check Out Keys
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Fleet overview pill -->
+    <div class="absolute bottom-lg left-lg right-[420px] bg-white/90 backdrop-blur-md border border-outline-variant rounded-xl p-md shadow-xl flex items-center gap-lg z-10">
+      <div class="flex items-center gap-md flex-1">
+        <div class="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 flex-shrink-0">
+          <span class="material-symbols-outlined" style="font-size:18px">check_circle</span>
+        </div>
+        <div>
+          <p class="text-xs font-label-caps text-on-surface-variant">Available</p>
+          <p id="fleet-available" class="font-bold text-on-background">—</p>
+        </div>
+      </div>
+      <div class="h-6 w-px bg-outline-variant"></div>
+      <div class="flex items-center gap-md flex-1">
+        <div class="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 flex-shrink-0">
+          <span class="material-symbols-outlined" style="font-size:18px">key</span>
+        </div>
+        <div>
+          <p class="text-xs font-label-caps text-on-surface-variant">Checked Out</p>
+          <p id="fleet-checked-out" class="font-bold text-on-background">—</p>
+        </div>
+      </div>
+      <div class="h-6 w-px bg-outline-variant"></div>
+      <div class="flex items-center gap-md flex-1">
+        <div class="w-9 h-9 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 flex-shrink-0">
+          <span class="material-symbols-outlined" style="font-size:18px">build</span>
+        </div>
+        <div>
+          <p class="text-xs font-label-caps text-on-surface-variant">Maintenance</p>
+          <p id="fleet-maintenance" class="font-bold text-on-background">—</p>
+        </div>
+      </div>
+      <div class="h-6 w-px bg-outline-variant"></div>
+      <div class="flex items-center gap-md flex-1">
+        <div class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant flex-shrink-0">
+          <span class="material-symbols-outlined" style="font-size:18px">local_shipping</span>
+        </div>
+        <div>
+          <p class="text-xs font-label-caps text-on-surface-variant">Total Units</p>
+          <p id="fleet-total" class="font-bold text-on-background">—</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Equipment Inventory -->
+  <section data-section="equipment" class="hidden h-[calc(100vh-64px)] overflow-y-auto p-lg">
+    <div class="flex items-center justify-between mb-lg">
+      <div>
+        <h2 class="text-headline-md font-headline-md text-on-background">Equipment Inventory</h2>
+        <p id="eq-count" class="text-body-sm text-on-surface-variant mt-xs"></p>
+      </div>
+      <button id="btn-add-eq" data-admin
+        class="bg-primary-container text-on-primary-container font-bold px-lg py-sm rounded-lg hover:brightness-110 flex items-center gap-sm text-body-sm">
+        <span class="material-symbols-outlined" style="font-size:18px">add</span>Add Equipment
+      </button>
+    </div>
+    <div class="flex flex-wrap gap-md mb-lg">
+      <div class="relative flex-1 min-w-48">
+        <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:16px">search</span>
+        <input id="eq-search" type="text" placeholder="Search name, make, serial..."
+          class="w-full pl-xl pr-md py-sm bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-body-sm"/>
+      </div>
+      <select id="eq-status-filter"
+        class="bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="">All Status</option>
+        <option value="available">Available</option>
+        <option value="checked_out">Checked Out</option>
+        <option value="maintenance">Maintenance</option>
+        <option value="decommissioned">Decommissioned</option>
+      </select>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-surface-container-low border-b border-outline-variant">
+          <tr>
+            <th class="text-left px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Equipment</th>
+            <th class="text-left px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Serial No.</th>
+            <th class="text-left px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Status</th>
+            <th class="text-left px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Site</th>
+            <th data-admin class="text-right px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="eq-tbody">
+          <tr><td colspan="5" class="text-center py-xl text-on-surface-variant">
+            <span class="material-symbols-outlined animate-spin" style="font-size:24px">refresh</span>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Active Sites -->
+  <section data-section="sites" class="hidden h-[calc(100vh-64px)] overflow-y-auto p-lg">
+    <div class="flex items-center justify-between mb-lg">
+      <div>
+        <h2 class="text-headline-md font-headline-md text-on-background">Active Sites</h2>
+        <p id="sites-count" class="text-body-sm text-on-surface-variant mt-xs"></p>
+      </div>
+      <button id="btn-add-site"
+        class="bg-primary-container text-on-primary-container font-bold px-lg py-sm rounded-lg hover:brightness-110 flex items-center gap-sm text-body-sm">
+        <span class="material-symbols-outlined" style="font-size:18px">add</span>Add Site
+      </button>
+    </div>
+    <div id="sites-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-lg"></div>
+  </section>
+
+  <!-- Audit Log -->
+  <section data-section="audit" class="hidden h-[calc(100vh-64px)] overflow-y-auto p-lg">
+    <div class="flex items-center justify-between mb-lg">
+      <div>
+        <h2 class="text-headline-md font-headline-md text-on-background">Audit Log</h2>
+        <p id="audit-info" class="text-body-sm text-on-surface-variant mt-xs"></p>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-md mb-lg p-md bg-surface-container-low border border-outline-variant rounded-lg items-end">
+      <div class="flex flex-col gap-xs">
+        <label class="text-xs font-label-caps text-on-surface-variant uppercase">Action</label>
+        <select id="audit-action"
+          class="bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-xs text-body-sm focus:outline-none focus:ring-2 focus:ring-primary">
+          <option value="">All Actions</option>
+          <option value="checkout">Checkout</option>
+          <option value="return">Return</option>
+          <option value="created">Created</option>
+          <option value="updated">Updated</option>
+          <option value="deleted">Deleted</option>
+          <option value="status_change">Status Change</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-xs">
+        <label class="text-xs font-label-caps text-on-surface-variant uppercase">From</label>
+        <input type="date" id="audit-from"
+          class="bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-xs text-body-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+      </div>
+      <div class="flex flex-col gap-xs">
+        <label class="text-xs font-label-caps text-on-surface-variant uppercase">To</label>
+        <input type="date" id="audit-to"
+          class="bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-xs text-body-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+      </div>
+      <button id="audit-apply" class="bg-primary text-on-primary font-bold px-lg py-xs rounded-lg hover:brightness-110 text-body-sm">Apply</button>
+      <button id="audit-reset" class="border border-outline-variant px-lg py-xs rounded-lg hover:bg-surface-container-high font-bold text-body-sm text-on-surface-variant">Reset</button>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-surface-container-low border-b border-outline-variant">
+          <tr>
+            <th class="text-left px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Timestamp</th>
+            <th class="text-left px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Equipment</th>
+            <th class="text-left px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Employee</th>
+            <th class="text-left px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Action</th>
+            <th class="text-left px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Details</th>
+          </tr>
+        </thead>
+        <tbody id="audit-tbody"></tbody>
+      </table>
+    </div>
+    <div class="flex items-center justify-between mt-md px-xs">
+      <button id="audit-prev" class="flex items-center gap-sm text-body-sm font-bold text-on-surface-variant hover:text-on-background disabled:opacity-30 transition-colors">
+        <span class="material-symbols-outlined" style="font-size:16px">chevron_left</span>Previous
+      </button>
+      <span id="audit-page-info" class="text-body-sm text-on-surface-variant"></span>
+      <button id="audit-next" class="flex items-center gap-sm text-body-sm font-bold text-on-surface-variant hover:text-on-background disabled:opacity-30 transition-colors">
+        Next<span class="material-symbols-outlined" style="font-size:16px">chevron_right</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Settings -->
+  <section data-section="settings" class="hidden h-[calc(100vh-64px)] overflow-y-auto p-lg">
+    <h2 class="text-headline-md font-headline-md text-on-background mb-lg">Settings</h2>
+    <div class="max-w-lg space-y-lg">
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg">
+        <h3 class="font-bold text-on-background mb-md flex items-center gap-sm">
+          <span class="material-symbols-outlined text-primary" style="font-size:20px">account_circle</span>Account
+        </h3>
+        <div class="space-y-sm">
+          <div class="flex items-center justify-between py-sm border-b border-outline-variant">
+            <span class="text-body-sm text-on-surface-variant">Full Name</span>
+            <span id="s-full-name" class="font-bold text-body-sm text-on-background">—</span>
+          </div>
+          <div class="flex items-center justify-between py-sm border-b border-outline-variant">
+            <span class="text-body-sm text-on-surface-variant">Username</span>
+            <span id="s-username" class="font-data-mono text-data-mono text-on-background">—</span>
+          </div>
+          <div class="flex items-center justify-between py-sm">
+            <span class="text-body-sm text-on-surface-variant">Role</span>
+            <span id="s-role" class="font-bold text-body-sm capitalize text-on-background">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg">
+        <h3 class="font-bold text-on-background mb-md flex items-center gap-sm">
+          <span class="material-symbols-outlined text-primary" style="font-size:20px">lock</span>Change Password
+        </h3>
+        <p class="text-body-sm text-on-surface-variant mb-md">Password changes require direct database access or a dedicated user management endpoint.</p>
+        <p class="text-body-sm text-on-surface-variant">Run <code class="font-data-mono bg-surface-container px-xs py-1 rounded">php database/seed_admin.php</code> to reset default credentials.</p>
+      </div>
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg">
+        <h3 class="font-bold text-on-background mb-md flex items-center gap-sm">
+          <span class="material-symbols-outlined text-error" style="font-size:20px">logout</span>Session
+        </h3>
+        <button id="settings-logout"
+          class="bg-error-container text-on-error-container font-bold px-lg py-sm rounded-lg hover:brightness-95 transition-all text-body-sm">
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Support -->
+  <section data-section="support" class="hidden h-[calc(100vh-64px)] overflow-y-auto p-lg">
+    <h2 class="text-headline-md font-headline-md text-on-background mb-lg">Support</h2>
+    <div class="max-w-lg space-y-lg">
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg">
+        <h3 class="font-bold text-on-background mb-md flex items-center gap-sm">
+          <span class="material-symbols-outlined text-primary" style="font-size:20px">info</span>System Info
+        </h3>
+        <div class="space-y-sm text-body-sm">
+          <div class="flex justify-between py-xs border-b border-outline-variant">
+            <span class="text-on-surface-variant">Application</span><span class="font-bold">FleetControl Pro</span>
+          </div>
+          <div class="flex justify-between py-xs border-b border-outline-variant">
+            <span class="text-on-surface-variant">Version</span><span class="font-data-mono text-data-mono">1.0.0</span>
+          </div>
+          <div class="flex justify-between py-xs">
+            <span class="text-on-surface-variant">Backend</span><span class="font-bold">PHP / MySQL (XAMPP)</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg">
+        <h3 class="font-bold text-on-background mb-md flex items-center gap-sm">
+          <span class="material-symbols-outlined text-primary" style="font-size:20px">help</span>Quick Help
+        </h3>
+        <ul class="space-y-sm text-body-sm text-on-surface-variant">
+          <li class="flex items-start gap-sm"><span class="material-symbols-outlined text-primary mt-xs" style="font-size:14px">arrow_right</span>Use <strong class="text-on-background">Check In / Out</strong> in the top bar to manage key checkouts.</li>
+          <li class="flex items-start gap-sm"><span class="material-symbols-outlined text-primary mt-xs" style="font-size:14px">arrow_right</span><strong class="text-on-background">Admin</strong> users can add, edit, and delete equipment and sites.</li>
+          <li class="flex items-start gap-sm"><span class="material-symbols-outlined text-primary mt-xs" style="font-size:14px">arrow_right</span><strong class="text-on-background">Staff</strong> users have read-only access to equipment and audit logs.</li>
+          <li class="flex items-start gap-sm"><span class="material-symbols-outlined text-primary mt-xs" style="font-size:14px">arrow_right</span>Run <code class="font-data-mono bg-surface-container px-xs py-1 rounded">php tests/api_test.php</code> to verify backend health.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── Modal: Equipment ─────────────────────────────────────────────────── -->
+<div id="modal-equipment" class="hidden fixed inset-0 bg-on-background/60 backdrop-blur-sm z-50 flex items-center justify-center p-md">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant w-full max-w-lg shadow-2xl">
+    <div class="flex items-center justify-between p-lg border-b border-outline-variant">
+      <h3 id="eq-modal-title" class="font-headline-md text-headline-md text-on-background">Add Equipment</h3>
+      <button class="modal-close text-on-surface-variant hover:text-on-background" data-modal="modal-equipment">
+        <span class="material-symbols-outlined" style="font-size:20px">close</span>
+      </button>
+    </div>
+    <form id="equipment-form" class="p-lg space-y-md">
+      <input type="hidden" id="eq-id"/>
+      <div class="grid grid-cols-2 gap-md">
+        <div class="col-span-2">
+          <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Name <span class="text-error">*</span></label>
+          <input id="eq-name" type="text" required class="form-input w-full" placeholder="e.g. Excavator Alpha"/>
+        </div>
+        <div>
+          <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Make <span class="text-error">*</span></label>
+          <input id="eq-make" type="text" required class="form-input w-full" placeholder="e.g. Komatsu"/>
+        </div>
+        <div>
+          <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Model <span class="text-error">*</span></label>
+          <input id="eq-model" type="text" required class="form-input w-full" placeholder="e.g. PC200-8"/>
+        </div>
+        <div>
+          <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Serial No. <span class="text-error">*</span></label>
+          <input id="eq-serial" type="text" required class="form-input w-full" placeholder="e.g. KOM-PC200-0001"/>
+        </div>
+        <div>
+          <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Status</label>
+          <select id="eq-status" class="form-input w-full">
+            <option value="available">Available</option>
+            <option value="checked_out">Checked Out</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="decommissioned">Decommissioned</option>
+          </select>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Site</label>
+          <select id="eq-site" class="form-input w-full">
+            <option value="">— No site assigned —</option>
+          </select>
+        </div>
+      </div>
+    </form>
+    <div class="flex justify-end gap-md p-lg border-t border-outline-variant">
+      <button class="modal-close border border-outline px-lg py-sm rounded-lg font-bold text-body-sm text-on-surface-variant hover:bg-surface-container-low transition-colors" data-modal="modal-equipment">Cancel</button>
+      <button id="eq-save" type="submit" form="equipment-form"
+        class="bg-primary text-on-primary font-bold px-lg py-sm rounded-lg hover:brightness-110 transition-all text-body-sm">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Site ──────────────────────────────────────────────────────── -->
+<div id="modal-site" class="hidden fixed inset-0 bg-on-background/60 backdrop-blur-sm z-50 flex items-center justify-center p-md">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant w-full max-w-lg shadow-2xl">
+    <div class="flex items-center justify-between p-lg border-b border-outline-variant">
+      <h3 id="site-modal-title" class="font-headline-md text-headline-md text-on-background">Add Site</h3>
+      <button class="modal-close text-on-surface-variant hover:text-on-background" data-modal="modal-site">
+        <span class="material-symbols-outlined" style="font-size:20px">close</span>
+      </button>
+    </div>
+    <form id="site-form" class="p-lg space-y-md">
+      <input type="hidden" id="site-id"/>
+      <div>
+        <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Site Name <span class="text-error">*</span></label>
+        <input id="site-name" type="text" required class="form-input w-full" placeholder="e.g. Northgate Plaza Project"/>
+      </div>
+      <div>
+        <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Address <span class="text-error">*</span></label>
+        <input id="site-address" type="text" required class="form-input w-full" placeholder="e.g. 123 Commerce Ave, Davao City"/>
+      </div>
+      <div class="grid grid-cols-2 gap-md">
+        <div>
+          <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Latitude <span class="text-error">*</span></label>
+          <input id="site-lat" type="number" step="0.0000001" required class="form-input w-full" placeholder="7.0707"/>
+        </div>
+        <div>
+          <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Longitude <span class="text-error">*</span></label>
+          <input id="site-lng" type="number" step="0.0000001" required class="form-input w-full" placeholder="125.6087"/>
+        </div>
+      </div>
+    </form>
+    <div class="flex justify-end gap-md p-lg border-t border-outline-variant">
+      <button class="modal-close border border-outline px-lg py-sm rounded-lg font-bold text-body-sm text-on-surface-variant hover:bg-surface-container-low transition-colors" data-modal="modal-site">Cancel</button>
+      <button id="site-save" type="submit" form="site-form"
+        class="bg-primary text-on-primary font-bold px-lg py-sm rounded-lg hover:brightness-110 transition-all text-body-sm">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Check In/Out ──────────────────────────────────────────────── -->
+<div id="modal-checkout" class="hidden fixed inset-0 bg-on-background/60 backdrop-blur-sm z-50 flex items-center justify-center p-md">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between p-lg border-b border-outline-variant flex-shrink-0">
+      <h3 class="font-headline-md text-headline-md text-on-background">Key Check In / Out</h3>
+      <button class="modal-close text-on-surface-variant hover:text-on-background" data-modal="modal-checkout">
+        <span class="material-symbols-outlined" style="font-size:20px">close</span>
+      </button>
+    </div>
+    <div class="flex border-b border-outline-variant flex-shrink-0">
+      <button id="tab-co-btn" data-admin
+        class="flex-1 py-sm font-label-caps text-label-caps border-b-2 border-primary text-primary transition-colors">Check Out</button>
+      <button id="tab-ret-btn"
+        class="flex-1 py-sm font-label-caps text-label-caps border-b-2 border-transparent text-on-surface-variant hover:text-on-background transition-colors">Return Key</button>
+    </div>
+    <!-- Check Out panel -->
+    <div id="tab-co" class="flex-1 overflow-y-auto p-lg">
+      <form id="checkout-form" class="space-y-md" novalidate>
+        <div>
+          <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Equipment <span class="text-error">*</span></label>
+          <select id="co-equipment" required class="form-input w-full">
+            <option value="">Loading available equipment...</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-md">
+          <div>
+            <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Employee Name <span class="text-error">*</span></label>
+            <input id="co-emp-name" type="text" required class="form-input w-full" placeholder="Full name"/>
+          </div>
+          <div>
+            <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Employee ID <span class="text-error">*</span></label>
+            <input id="co-emp-id" type="text" required class="form-input w-full" placeholder="EMP-001"/>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Expected Return</label>
+          <input id="co-return" type="datetime-local" class="form-input w-full"/>
+        </div>
+        <div>
+          <label class="block text-xs font-label-caps text-on-surface-variant mb-xs uppercase">Notes</label>
+          <textarea id="co-notes" rows="2" class="form-input w-full resize-none" placeholder="Optional notes..."></textarea>
+        </div>
+      </form>
+    </div>
+    <!-- Return panel -->
+    <div id="tab-ret" class="hidden flex-1 overflow-y-auto p-lg">
+      <div id="active-checkouts-list" class="space-y-sm">
+        <p class="text-on-surface-variant text-body-sm text-center py-lg">Loading active checkouts...</p>
+      </div>
+    </div>
+    <div id="co-footer" class="flex justify-end gap-md p-lg border-t border-outline-variant flex-shrink-0">
+      <button class="modal-close border border-outline px-lg py-sm rounded-lg font-bold text-body-sm text-on-surface-variant hover:bg-surface-container-low transition-colors" data-modal="modal-checkout">Cancel</button>
+      <button id="co-submit" type="submit" form="checkout-form"
+        class="bg-primary text-on-primary font-bold px-lg py-sm rounded-lg hover:brightness-110 transition-all text-body-sm flex items-center gap-sm">
+        <span class="material-symbols-outlined" style="font-size:16px">key</span>Check Out
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Confirm Delete ─────────────────────────────────────────────── -->
+<div id="modal-confirm" class="hidden fixed inset-0 bg-on-background/60 backdrop-blur-sm z-50 flex items-center justify-center p-md">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant w-full max-w-sm shadow-2xl p-lg">
+    <div class="flex items-center gap-md mb-md">
+      <div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center flex-shrink-0">
+        <span class="material-symbols-outlined text-error" style="font-size:20px">warning</span>
+      </div>
+      <h3 class="font-bold text-on-background">Confirm Delete</h3>
+    </div>
+    <p id="confirm-msg" class="text-body-sm text-on-surface-variant mb-lg">Are you sure?</p>
+    <div class="flex justify-end gap-md">
+      <button id="confirm-no" class="border border-outline px-lg py-sm rounded-lg font-bold text-body-sm text-on-surface-variant hover:bg-surface-container-low">Cancel</button>
+      <button id="confirm-yes" class="bg-error text-on-error font-bold px-lg py-sm rounded-lg hover:brightness-110 text-body-sm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast Container ──────────────────────────────────────────────────── -->
+<div id="toasts" class="fixed bottom-lg right-lg z-[60] flex flex-col gap-sm pointer-events-none"></div>
+
+<!-- ── Styles ────────────────────────────────────────────────────────────── -->
+<style>
+  .form-input {
+    background: #eceef0;
+    border: 1px solid #e0c0b1;
+    border-radius: 0.25rem;
+    padding: 6px 12px;
+    font-size: 14px;
+    color: #191c1e;
+    outline: none;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .form-input:focus { border-color: #9d4300; box-shadow: 0 0 0 2px rgba(157,67,0,0.2); }
+  .form-input select, select.form-input { appearance: auto; }
+  .leaflet-container { font-family: inherit; }
+  .map-marker { width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+  .map-marker-inner { width: 100%; height: 100%; border-radius: inherit; display: flex; align-items: center; justify-content: center; transform: rotate(45deg); }
+</style>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

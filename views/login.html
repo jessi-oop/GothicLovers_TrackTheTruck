@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FleetControl — Sign In</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0&display=swap" rel="stylesheet"/>
+<script>if (sessionStorage.getItem('fc_token')) window.location.href = 'app.html';</script>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden" style="background:#0b0d0f">
+
+<!-- Warm glow behind the card -->
+<div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 70% 50% at 50% -5%, rgba(157,67,0,.18) 0%, transparent 65%)"></div>
+
+<div class="relative w-full" style="max-width:360px">
+
+  <!-- Brand -->
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
+         style="background:#9d4300;box-shadow:0 8px 30px rgba(157,67,0,.40)">
+      <span class="material-symbols-outlined text-white" style="font-size:28px">local_shipping</span>
+    </div>
+    <h1 class="text-3xl font-bold text-white tracking-tight" style="font-family:'IBM Plex Sans',sans-serif">FleetControl</h1>
+    <p class="text-xs font-semibold uppercase tracking-[.2em] mt-1" style="color:rgba(255,255,255,.25)">Industrial Logistics Platform</p>
+  </div>
+
+  <!-- Sign-in card -->
+  <div class="rounded-2xl p-7" style="background:#161a1d;border:1px solid rgba(255,255,255,.07);box-shadow:0 24px 60px rgba(0,0,0,.5)">
+    <h2 class="text-lg font-semibold text-white mb-5">Sign in</h2>
+
+    <!-- Error banner -->
+    <div id="error-alert" class="hidden mb-4 flex items-center gap-2 px-3 py-2.5 rounded-xl"
+         style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18)">
+      <span class="material-symbols-outlined flex-shrink-0" style="font-size:16px;color:#f87171">error</span>
+      <span id="error-msg" class="text-sm leading-tight" style="color:#fca5a5"></span>
+    </div>
+
+    <form id="login-form" novalidate class="space-y-4">
+
+      <!-- Username -->
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-widest mb-1.5" style="color:rgba(255,255,255,.35)">Username</label>
+        <input type="text" id="username" autocomplete="username" required
+          placeholder="Enter your username"
+          class="w-full text-sm text-white rounded-xl px-4 py-2.5 transition-all focus:outline-none"
+          style="background:#0b0d0f;border:1px solid rgba(255,255,255,.08);caret-color:#f97316;color-scheme:dark"
+          onfocus="this.style.borderColor='rgba(157,67,0,.6)';this.style.boxShadow='0 0 0 3px rgba(157,67,0,.12)'"
+          onblur="this.style.borderColor='rgba(255,255,255,.08)';this.style.boxShadow='none'"/>
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-widest mb-1.5" style="color:rgba(255,255,255,.35)">Password</label>
+        <div class="relative">
+          <input type="password" id="password" autocomplete="current-password" required
+            placeholder="Enter your password"
+            class="w-full text-sm text-white rounded-xl px-4 py-2.5 pr-10 transition-all focus:outline-none"
+            style="background:#0b0d0f;border:1px solid rgba(255,255,255,.08);caret-color:#f97316;color-scheme:dark"
+            onfocus="this.style.borderColor='rgba(157,67,0,.6)';this.style.boxShadow='0 0 0 3px rgba(157,67,0,.12)'"
+            onblur="this.style.borderColor='rgba(255,255,255,.08)';this.style.boxShadow='none'"/>
+          <button type="button" id="toggle-pw" tabindex="-1"
+            class="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+            style="color:rgba(255,255,255,.25)"
+            onmouseenter="this.style.color='rgba(255,255,255,.6)'"
+            onmouseleave="this.style.color='rgba(255,255,255,.25)'">
+            <span id="eye-icon" class="material-symbols-outlined" style="font-size:18px">visibility</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" id="submit-btn"
+        class="w-full text-white font-semibold text-sm py-2.5 rounded-xl mt-1 flex items-center justify-center gap-2 transition-all active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
+        style="background:#9d4300"
+        onmouseenter="if(!this.disabled)this.style.background='#b34d00'"
+        onmouseleave="this.style.background='#9d4300'">
+        <span id="btn-text">Sign In</span>
+        <span id="btn-icon" class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+      </button>
+
+    </form>
+  </div>
+
+  <!-- Default credentials hint -->
+  <div class="mt-4 px-4 py-3.5 rounded-xl" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)">
+    <p class="text-xs font-semibold uppercase tracking-[.15em] mb-2.5" style="color:rgba(255,255,255,.25)">Default credentials</p>
+    <div class="space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium" style="color:rgba(255,255,255,.35)">Admin</span>
+        <code class="text-xs rounded-lg px-2 py-1" style="color:rgba(255,255,255,.55);background:rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace">admin / admin123</code>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium" style="color:rgba(255,255,255,.35)">Staff</span>
+        <code class="text-xs rounded-lg px-2 py-1" style="color:rgba(255,255,255,.55);background:rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace">staff01 / staff123</code>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BASE = window.location.pathname
+  .replace(/\/(views|api)(\/.*)?$/, '')
+  .replace(/\/$/, '');
+
+document.getElementById('toggle-pw').addEventListener('click', () => {
+  const pw = document.getElementById('password');
+  const ic = document.getElementById('eye-icon');
+  pw.type = pw.type === 'password' ? 'text' : 'password';
+  ic.textContent = pw.type === 'password' ? 'visibility' : 'visibility_off';
+});
+
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  if (!username || !password) { showError('Please enter your username and password.'); return; }
+
+  setLoading(true);
+  document.getElementById('error-alert').classList.add('hidden');
+
+  try {
+    const res  = await fetch(BASE + '/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { showError(data.error || 'Invalid credentials.'); return; }
+    sessionStorage.setItem('fc_token', data.token);
+    sessionStorage.setItem('fc_user', JSON.stringify(data.user));
+    window.location.href = 'app.html';
+  } catch {
+    showError('Cannot reach server. Is XAMPP running?');
+  } finally {
+    setLoading(false);
+  }
+});
+
+function showError(msg) {
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('error-alert').classList.remove('hidden');
+}
+
+function setLoading(on) {
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = on;
+  document.getElementById('btn-text').textContent = on ? 'Signing in...' : 'Sign In';
+  document.getElementById('btn-icon').textContent = on ? 'hourglass_top' : 'arrow_forward';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# ─── Credentials & secrets ───────────────────────────────────────────────────
+# Contains DB credentials and Google Maps API key — never commit this
+src/config.php
+
+# Rename src/config.php to src/config.example.php with placeholder values
+# for other developers to use as a template
+
+# Generic env/secret files
+.env
+.env.*
+*.env
+secrets.php
+secrets.json
+
+# ─── PHP / Composer ──────────────────────────────────────────────────────────
+vendor/
+composer.lock
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+*.log
+logs/
+error_log
+php_errors.log
+
+# ─── IDE & editors ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── OS ──────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+desktop.ini
+ehthumbs.db
